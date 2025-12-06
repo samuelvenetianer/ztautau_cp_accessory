@@ -6,6 +6,7 @@
 #include<vector>
 #include<iterator>
 #include<algorithm> 
+#include<fstream>
 
 #include </cvmfs/sft.cern.ch/lcg/releases/LCG_104c_ATLAS_2/ROOT/6.28.10/x86_64-el9-gcc13-opt/include/TROOT.h>
 #include </cvmfs/sft.cern.ch/lcg/releases/LCG_104c_ATLAS_2/ROOT/6.28.10/x86_64-el9-gcc13-opt/include/TTree.h>
@@ -21,10 +22,10 @@
 int main() {
     
     // polarized
-    // TFile f("/eos/user/s/svenetia/taucp_ntuples_with_hadhad/mc/hadhad/mc20e/nom/user.svenetia.Ztt_pythia02.mc20_13TeV.802365.Py8_DYtt_60M250_hadhad.PHYS.r13145_p6266.w_0_Zt/user.svenetia.46611689._000001.ZttHadHad.root"); // read input file
+    TFile f("/eos/user/s/svenetia/taucp_ntuples_with_hadhad/mc/hadhad/mc20e/nom/user.svenetia.Ztt_pythia02.mc20_13TeV.802365.Py8_DYtt_60M250_hadhad.PHYS.r13145_p6266.w_0_Zt/user.svenetia.46611689._000001.ZttHadHad.root"); // read input file
     
     // unpolarized
-    TFile f("/eos/user/s/svenetia/taucp_ntuples_with_hadhad/mc/hadhad/mc20e/nom/user.svenetia.Ztt_test02.mc20_13TeV.602984.PhPy8_Ztt_UnPol_had30had20.PHYS.r13145_p6490.w_0_Zt/user.svenetia.46373438._000001.ZttHadHad.root");
+    // TFile f("/eos/user/s/svenetia/taucp_ntuples_with_hadhad/mc/hadhad/mc20e/nom/user.svenetia.Ztt_test02.mc20_13TeV.602984.PhPy8_Ztt_UnPol_had30had20.PHYS.r13145_p6490.w_0_Zt/user.svenetia.46373438._000001.ZttHadHad.root");
 
     TTree *input_tree = (TTree*)f.Get("NOMINAL");        // "Get" the NOMINAL tree from the file and assign it to local variable "input_tree"
 
@@ -92,26 +93,26 @@ int main() {
     h1 = new TH1D("h1", "Psi Truth", 30, -3.14, 3.14);
     h2 = new TH1D("h2", "Psi Reco", 30, -3.14, 3.14);
 
-    TFile fout1("psi_truth_unpol.root", "recreate");
-    TFile fout2("psi_reco_unpol.root", "recreate");
+    TFile fout1("psi_truth_pol.root", "recreate");
+    TFile fout2("psi_reco_pol.root", "recreate");
 
     std::cout << "Starting loop..." << std::endl;
 
-    // int nEntries = input_tree->GetEntries();
+    int nEntries = input_tree->GetEntries();
 
-    for ( int randCounter = 0 ; randCounter < 100 ; randCounter++ ) { // iterate from 0 to the max number of events you want to select
+    for ( int randCounter = 0 ; randCounter < nEntries ; randCounter++ ) { // iterate from 0 to the max number of events you want to select
         // int i = rand.Uniform(input_tree->GetEntries());     // chooses a random number from the entries in the input tree
 
         input_tree->GetEvent(randCounter);                            // get the information for the specific event
 
-        std::cout << "Index for this event is: " << randCounter << std::endl;
+        // std::cout << "Index for this event is: " << randCounter << std::endl;
 
         // truth selections
         if ((tau0_matched_n_charged_pion==1) && (tau0_matched_n_neutral_pion==1) && (tau0_matched_isHadTau==1) && (tau1_matched_n_charged_pion==1) && (tau1_matched_n_neutral_pion==1) && (tau1_matched_isHadTau==1))
         //if ((tau0_pantau_decay_mode == 1) && (tau1_pantau_decay_mode == 1) && (tau0_n_charged_tracks == 1) && (tau1_n_charged_tracks == 1))
         {
 
-        std::cout << "This event has taus!" << std::endl;
+        // std::cout << "This event has taus!" << std::endl;
 
         // std::cout << "Index for this event is: " << randCounter << " and number of taus is: " << n_taus << " and number of charged tracks is: " << tau0_n_charged_tracks << " and " << tau1_n_charged_tracks << std::endl; // print branch information for that index
 
@@ -120,7 +121,7 @@ int main() {
 
         // implement TRUTH psi calculation
 
-        std::cout << "Calculating truth level psi..." << std::endl;
+        // std::cout << "Calculating truth level psi..." << std::endl;
 
         TLorentzVector had_tau0_vis;
         TLorentzVector had_tau1_vis;
@@ -197,7 +198,7 @@ int main() {
             psi += 2 * M_PI;
         }
         
-        std::cout << "Truth Level Psi: " << psi << "\n" << std::endl;
+        // std::cout << "Truth Level Psi: " << psi << "\n" << std::endl;
 
         psi_truth.push_back(psi);
         h1->Fill(psi);
@@ -206,7 +207,7 @@ int main() {
 
         // *** IMPLEMENTING RECO PSI CALCULATION **
 
-        std::cout << "Calculating reco level psi..." << std::endl;
+        // std::cout << "Calculating reco level psi..." << std::endl;
         
         TLorentzVector tau0_neut_pion_reco;          // pulls from pi0_p4
         TLorentzVector tau1_neut_pion_reco;
@@ -299,7 +300,7 @@ int main() {
             psi_reco += 2 * M_PI;
         }
         
-        std::cout << "Reco Level Psi: " << psi_reco << "\n" << std::endl;
+        // std::cout << "Reco Level Psi: " << psi_reco << "\n" << std::endl;
 
         psi_reco_vec.push_back(psi_reco);
         h2->Fill(psi_reco);
@@ -319,8 +320,15 @@ int main() {
 	std::cout << "Length of truth psi: " << psi_truth.size() << std::endl;
     std::cout << "Length of reco psi: " << psi_reco_vec.size() << std::endl;
 
-    // std::copy(psi_truth.begin(), psi_truth.end(), std::ostream_iterator<std::float>(std::cout, "\n"));
-    // std::copy(psi_reco_vec.begin(), psi_reco_vec.end(), std::ostream_iterator<std::float>(std::cout, "\n"));
+    //std::vector<float> example {1,2,3,4};
+
+    std::ofstream reco_output_file("./psi_reco.csv");
+    std::ostream_iterator<float> reco_output_iterator(reco_output_file, "\n");
+    std::copy(std::begin(psi_reco_vec), std::end(psi_reco_vec), reco_output_iterator);
+
+    std::ofstream truth_output_file("./psi_truth.csv");
+    std::ostream_iterator<float> truth_output_iterator(truth_output_file, "\n");
+    std::copy(std::begin(psi_truth), std::end(psi_truth), truth_output_iterator);
 
     // Drawing Histograms
 
