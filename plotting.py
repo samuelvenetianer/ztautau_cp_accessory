@@ -18,7 +18,7 @@ def two_D_plot (reco_file, truth_file, csv_path, fig_filename, fig_path):
   # construct paths  
   psi_reco_file = csv_path + reco_file
   psi_truth_file = csv_path + truth_file
-  fig_file = fig_path + "Psi_" + fig_filename + "_2D.png"
+  fig_file = fig_path + fig_filename
   
   print("Pulling reco results here: ", psi_reco_file)
   print("Pulling truth results here: ", psi_truth_file)
@@ -34,11 +34,19 @@ def two_D_plot (reco_file, truth_file, csv_path, fig_filename, fig_path):
   # plotting colormap where color denotes number of entries
 
   print("Plotting...")
-  fig2 = px.density_heatmap(psi_df, x="psi_reco", y="psi_truth", nbinsx=28, nbinsy=28, title = fig_filename)
+  fig2 = px.density_heatmap(psi_df, x="psi_reco", 
+                            y="psi_truth", 
+                            nbinsx=28, 
+                            nbinsy=28, 
+                            #title = fig_filename
+                            )
   fig2.update_layout(
     xaxis_title="Psi Reco",
     yaxis_title="Psi Truth",
-    coloraxis_colorbar_title="Entries"
+    coloraxis_colorbar_title="Entries",
+    font=dict(
+        size=18,
+        )
   )
   fig2.write_image(fig_file)
   print("Plot saved! All done.")
