@@ -8,50 +8,38 @@ import csv
 import math
 import plotly.express as px
 
-# before starting, run in terminal:
+# before starting, may need to run in terminal:
     # pip install plotly
     # pip install --upgrade kaleido
     # plotly_get_chrome
 
-# define psi files
-psi_reco_file = "/afs/cern.ch/user/s/svenetia/ztautau_cp_accessory/psi_reco.csv"
-psi_truth_file = "/afs/cern.ch/user/s/svenetia/ztautau_cp_accessory/psi_truth.csv"
-fig_path = "/afs/cern.ch/user/s/svenetia/ztautau_cp_accessory/2D.png"
+def two_D_plot (reco_file, truth_file, csv_path, fig_filename, fig_path):
 
-# open txt
-df_reco = pd.read_csv(psi_reco_file, delimiter=",", names = ["psi_reco"])
-df_truth = pd.read_csv(psi_truth_file, delimiter=",", names = ["psi_truth"])
+  # construct paths  
+  psi_reco_file = csv_path + reco_file
+  psi_truth_file = csv_path + truth_file
+  fig_file = fig_path + "Psi_" + fig_filename + "_2D.png"
+  
+  print("Pulling reco results here: ", psi_reco_file)
+  print("Pulling truth results here: ", psi_truth_file)
+  print("Plot will be saved here: ", fig_file)
 
-psi_reco = df_reco["psi_reco"]
-print(psi_reco)
-psi_truth = df_truth["psi_truth"]
-print(psi_truth)
-psi_df = pd.DataFrame(data=[psi_reco, psi_truth]).T
-print(psi_df)
+  # open .csvs as dataFrames and combine
+  df_reco = pd.read_csv(psi_reco_file, delimiter=",", names = ["psi_reco"])
+  df_truth = pd.read_csv(psi_truth_file, delimiter=",", names = ["psi_truth"])
+  psi_reco = df_reco["psi_reco"]
+  psi_truth = df_truth["psi_truth"]
+  psi_df = pd.DataFrame(data=[psi_reco, psi_truth]).T
 
-# print(psi_reco)
-# print(psi_truth)
-# print(len(psi_reco))
-# print(len(psi_truth))
+  # plotting colormap where color denotes number of entries
 
-# plotting (simple scatter)
-fig=plt.figure()
-plt.scatter(psi_reco, psi_truth)
-plt.xlabel("Psi Reco")
-plt.ylabel("Psi Truth")
-plt.savefig(fig_path, bbox_inches="tight")
-plt.close()
-
-# plotting (color map where entries is color)
-
-fig2 = px.density_heatmap(psi_df, x="psi_reco", y="psi_truth", nbinsx=28, nbinsy=28, title = "Psi Polarized")
-# fig2.show()
-fig2.update_layout(
-  xaxis_title="Psi Reco",
-  yaxis_title="Psi Truth",
-  coloraxis_colorbar_title="Entries"
-)
-fig2.write_image("2D_heatmap_polarized.png")
-
-# Having trouble editing binsize - seems to not adjust based on nbinsx/nbinsy
+  print("Plotting...")
+  fig2 = px.density_heatmap(psi_df, x="psi_reco", y="psi_truth", nbinsx=28, nbinsy=28, title = fig_filename)
+  fig2.update_layout(
+    xaxis_title="Psi Reco",
+    yaxis_title="Psi Truth",
+    coloraxis_colorbar_title="Entries"
+  )
+  fig2.write_image(fig_file)
+  print("Plot saved! All done.")
 
