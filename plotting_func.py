@@ -1,3 +1,16 @@
+"""
+This script defines plotting functions.
+These functions are called in run_plotting.py.
+
+Note: this script relies on plotly and the user may need 
+to run the following lines in terminal before use:
+
+    pip install plotly
+    pip install --upgrade kaleido
+    plotly_get_chrome
+
+"""
+ 
 #import required packages
 import numpy as np
 import pandas as pd
@@ -8,21 +21,33 @@ import csv
 import math
 import plotly.express as px
 
-# before starting, may need to run in terminal:
-    # pip install plotly
-    # pip install --upgrade kaleido
-    # plotly_get_chrome
-
 def two_D_plot (reco_file, truth_file, csv_path, fig_filename, fig_path):
+
+  """
+  A function for plotting a 2D colormap of two variables.
+  The x-axis and y-axis are two different variables.
+  The color represents the number of entries
+
+  Parameters:
+    reco_file (str): name of csv file with data for reco psi
+    truth_file (str): name of csv file with data for truth psi
+    csv_path (str): folder with csv files
+    fig_filename (str): filename for output plot
+    fig_path (str): folder path for output plot
+
+  Returns:
+    No explicit return.
+    Will write and save figure.
+  """
 
   # construct paths  
   psi_reco_file = csv_path + reco_file
   psi_truth_file = csv_path + truth_file
   fig_file = fig_path + fig_filename
   
-  print("Pulling reco results here: ", psi_reco_file)
-  print("Pulling truth results here: ", psi_truth_file)
-  print("Plot will be saved here: ", fig_file)
+  print("Reco data: \n", psi_reco_file)
+  print("Truth data: \n", psi_truth_file)
+  print("Plot will be saved here: \n", fig_file)
 
   # open .csvs as dataFrames and combine
   df_reco = pd.read_csv(psi_reco_file, delimiter=",", names = ["psi_reco"])
