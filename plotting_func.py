@@ -61,8 +61,8 @@ def two_D_plot (reco_file, truth_file, csv_path, fig_filename, fig_path):
   print("Plotting...")
   fig2 = px.density_heatmap(psi_df, x="psi_reco", 
                             y="psi_truth", 
-                            nbinsx=28, 
-                            nbinsy=28, 
+                            nbinsx=28, # does not update when edited
+                            nbinsy=28, # does not update when edited
                             #title = fig_filename
                             )
   fig2.update_layout(
