@@ -4,8 +4,8 @@ CFLAGS=-c -g -Wall `root-config --cflags`
 
 LDFLAGS=`root-config --glibs`
 
-all: select_events_reco_only
+all: hadhad_psi
 
-select_events_reco_only: select_events_reco_only.cc
-	$(CC) $(CFLAGS) -o select_events_reco_only.o select_events_reco_only.cc
-	$(CC) $(LDFLAGS) -o select_events_reco_only select_events_reco_only.o
+hadhad_psi: hadhad_psi.cc
+	$(CC) $(CFLAGS) -o hadhad_psi.o hadhad_psi.cc
+	$(CC) $(LDFLAGS) -o hadhad_psi hadhad_psi.o
