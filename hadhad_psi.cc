@@ -7,6 +7,8 @@
 #include<iterator>
 #include<algorithm> 
 #include<fstream>
+#include <chrono>
+#include <ctime>
 
 #include </cvmfs/sft.cern.ch/lcg/releases/LCG_104c_ATLAS_2/ROOT/6.28.10/x86_64-el9-gcc13-opt/include/TROOT.h>
 #include </cvmfs/sft.cern.ch/lcg/releases/LCG_104c_ATLAS_2/ROOT/6.28.10/x86_64-el9-gcc13-opt/include/TTree.h>
@@ -187,25 +189,28 @@ float hadhadRecoPsi(
 
 int main() {
 
+    // Start clock
+    auto start = std::chrono::system_clock::now();
+    std::time_t start_time = std::chrono::system_clock::to_time_t(start);
+    std::cout << "Current Date and Time: " << std::ctime(&start_time);
+
     // Select sample (select number of events above for loop)
 
     // polarized
-    /*
     TFile f("/eos/user/s/svenetia/taucp_ntuples_with_hadhad/mc/hadhad/mc20e/nom/user.svenetia.Ztt_pythia02.mc20_13TeV.802365.Py8_DYtt_60M250_hadhad.PHYS.r13145_p6266.w_0_Zt/user.svenetia.46611689._000001.ZttHadHad.root"); // read input file
-    TFile fout1("psiTruthPol.root", "recreate"); 
-    TFile fout2("psiRecoPol.root", "recreate");
-    string truthFilestem = "./psiTruthPol.csv";
-    string recoFilestem = "./psiRecoPol.csv";    
-    */
+	TFile fout1("./out-files/root/psiTruthPol.root", "recreate"); 
+    TFile fout2("./out-files/root/psiRecoPol.root", "recreate");
+    string truthFilestem = "./out-files/csv/psiTruthPol.csv";
+    string recoFilestem = "./out-files/csv/psiRecoPol.csv";    
 
     // unpolarized
-    
+    /*
     TFile f("/eos/user/s/svenetia/taucp_ntuples_with_hadhad/mc/hadhad/mc20e/nom/user.svenetia.Ztt_test02.mc20_13TeV.602984.PhPy8_Ztt_UnPol_had30had20.PHYS.r13145_p6490.w_0_Zt/user.svenetia.46373438._000001.ZttHadHad.root");
     TFile fout1("psiTruthUnPol.root", "recreate"); 
     TFile fout2("psiRecoUnPol.root", "recreate");
     string truthFilestem = "./psiTruthUnPol.csv";
     string recoFilestem = "./psiRecoUnPol.csv";
-    
+    */
 
     // ********************************************************************************************************************* //
 
@@ -278,12 +283,15 @@ int main() {
 
     // select number of events
     int nEntries = input_tree->GetEntries(); // all events
+   std::cout << "Num entries: " << nEntries << std::endl;
+
     // int nEntries = 50;                    // selection of events - if want random, make required change in "main" block
 
     for ( int randCounter = 0 ; randCounter < nEntries ; randCounter++ ) { // iterate from 0 to the max number of events you want to select
 
         input_tree->GetEvent(randCounter);                            // get the information for the specific event
-        
+   	    // std::cout << "Selected entry: " << randCounter << std::endl;
+
         // if selecting random events, uncomment below
         /*
         int i = rand.Uniform(input_tree->GetEntries());     // chooses a random number from the entries in the input tree
@@ -292,6 +300,7 @@ int main() {
 
         // truth selections
         if ((tau0_matched_n_charged_pion==1) && (tau0_matched_n_neutral_pion==1) && (tau0_matched_isHadTau==1) && (tau1_matched_n_charged_pion==1) && (tau1_matched_n_neutral_pion==1) && (tau1_matched_isHadTau==1)){
+	    // std::cout << "Passed selection!" << std::endl;
 
         // Calculate truth and reco psi
         float psi_truth_result = hadhadTruthPsi(
@@ -328,6 +337,8 @@ int main() {
     std::cout << "Length of reco psi: " << psi_reco_vec.size() << std::endl;
 	*/
 
+    std::cout << "Saving data to csv..." << std::endl;
+
     std::ofstream reco_output_file(truthFilestem);
     std::ostream_iterator<float> reco_output_iterator(reco_output_file, "\n");
     std::copy(std::begin(psi_reco_vec), std::end(psi_reco_vec), reco_output_iterator);
@@ -338,31 +349,39 @@ int main() {
 
     // Drawing Histograms
 
-    std::cout << "Plotting truth psi!" << std::endl;
+    std::cout << "Plotting truth psi..." << std::endl;
 
     fout1.cd();
 
-    std::cout << "writing..." << std::endl;
+    // std::cout << "writing..." << std::endl;
     h1->GetXaxis()->SetTitle("Truth Psi");
     h1->GetYaxis()->SetTitle("Entries");
     h1->Write();
-    std::cout << "closing..." << std::endl;
+    // std::cout << "closing..." << std::endl;
     fout1.Close();
     std::cout << "Done." << std::endl;
 
     // Reco Psi
 
-    std::cout << "Plotting reco psi!" << std::endl;
+    std::cout << "Plotting reco psi..." << std::endl;
     
     fout2.cd();
     
-    std::cout << "writing reco psi..." << std::endl;
+    // std::cout << "writing reco psi..." << std::endl;
     h2->GetXaxis()->SetTitle("Reco Psi");
     h2->GetYaxis()->SetTitle("Entries");
     h2->Write();
-    std::cout << "closing reco psi..." << std::endl;
+    // std::cout << "closing reco psi..." << std::endl;
     fout2.Close();
     std::cout << "Done." << std::endl;
+
+    auto end = std::chrono::system_clock::now();
+
+    std::chrono::duration<double> elapsed_seconds = end-start;
+    //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+    std::cout << "elapsed time: " << elapsed_seconds.count() << "s"
+              << std::endl;
 
     return 0;
     }
