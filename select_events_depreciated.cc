@@ -30,14 +30,19 @@ int main() {
     TLorentzVector* tau1_p4 = new TLorentzVector();     // test: create pointer tau1_p4 that points to a TLoretnzVector
     
     // Initialize TLorentzVector for each p4 needed for psi truth calc
-    TLorentzVector* tau0_matched_vis_p4 = new TLorentzVector();
+    TLorentzVector* tau0_matched_vis_p4 = new TLorentzVector();             // truth variables
     TLorentzVector* tau0_matched_vis_neutral_p4 = new TLorentzVector();
     TLorentzVector* tau1_matched_vis_p4 = new TLorentzVector();
     TLorentzVector* tau1_matched_vis_neutral_p4 = new TLorentzVector();
 
+    TLorentzVector* tau0_charged_tracks_p4 = new TLorentzVector();          // reco variables
+    TLorentzVector* tau0_pi0s_p4 = new TLorentzVector();
+    TLorentzVector* tau1_charged_tracks_p4 = new TLorentzVector();
+    TLorentzVector* tau1_pi0s_p4 = new TLorentzVector();
+
     input_tree->SetBranchAddress("n_taus", &n_taus);     // test: Assign new "n_taus" variables to its address (&n_taus) in the input_tree
    
-    input_tree->SetBranchAddress("tau0_matched_n_charged_pion", &tau0_matched_n_charged_pion);
+    input_tree->SetBranchAddress("tau0_matched_n_charged_pion", &tau0_matched_n_charged_pion); 
     input_tree->SetBranchAddress("tau0_matched_n_neutral_pion", &tau0_matched_n_neutral_pion);
     input_tree->SetBranchAddress("tau0_matched_isHadTau", &tau0_matched_isHadTau);
     input_tree->SetBranchAddress("tau1_matched_n_charged_pion", &tau1_matched_n_charged_pion);
@@ -47,19 +52,30 @@ int main() {
     input_tree->SetBranchAddress("tau1_p4", &tau1_p4);	// test
 
     // Point to all p4s needed for psi truth
-    input_tree->SetBranchAddress("tau0_matched_vis_p4", &tau0_matched_vis_p4);
+    input_tree->SetBranchAddress("tau0_matched_vis_p4", &tau0_matched_vis_p4);                      // truth variables
     input_tree->SetBranchAddress("tau0_matched_vis_neutral_p4", &tau0_matched_vis_neutral_p4);
     input_tree->SetBranchAddress("tau1_matched_vis_p4", &tau1_matched_vis_p4);
     input_tree->SetBranchAddress("tau1_matched_vis_neutral_p4", &tau1_matched_vis_neutral_p4);
+
+    input_tree->SetBranchAddress("tau0_charged_tracks_p4", &tau0_charged_tracks_p4);                      // reco variables
+    input_tree->SetBranchAddress("tau0_pi0s_p4", &tau0_pi0s_p4);
+    input_tree->SetBranchAddress("tau1_charged_tracks_p4", &tau1_charged_tracks_p4);
+    input_tree->SetBranchAddress("tau1_pi0s_p4", &tau1_pi0s_p4);
 
     TRandom3 rand;                                       // Initialize random number to 
     // std::cout << "Initialized random number" << std::endl;
 
     std::vector<float> psi_truth;
+    std::vector<float> psi_reco_vec;
 
     TH1* h1 = nullptr;
+    TH1* h2 = nullptr;
+
     h1 = new TH1D("h1", "Psi Truth", 30, -3.14, 3.14);
-    TFile fout("psi_truth.root", "recreate");
+    h2 = new TH1D("h2", "Psi Reco", 30, -3.14, 3.14);
+
+    TFile fout1("psi_truth.root", "recreate");
+    TFile fout2("psi_reco.root", "recreate");
 
     std::cout << "Starting loop..." << std::endl;
 
@@ -78,12 +94,14 @@ int main() {
 
         // implement TRUTH psi calculation
 
-        TLorentzVector had_tau0_vis;
+        TLorentzVector had_tau0_vis;            // pulls from matched_vis
         TLorentzVector had_tau1_vis;
-        TLorentzVector tau0_char_pion;
-        TLorentzVector tau1_char_pion;
-        TLorentzVector tau0_neut_pion;
+        
+        TLorentzVector tau0_neut_pion;          // pulls from matched_vis_neutral
         TLorentzVector tau1_neut_pion;
+
+        TLorentzVector tau0_char_pion;          // calculated
+        TLorentzVector tau1_char_pion;
 
         // Need to first subtract neutral pion from total p4 to get charged contribution for correct filling
         // This formula only works for truth because reco needs to fill from 'tau0_charged_tracks_p4'
@@ -163,28 +181,132 @@ int main() {
         //std::cout<<"psi_truth: " << psi_truth.size() <<std::endl;
 
 
+
+
+        // *** IMPLEMENTING RECO PSI CALCULATION **
+        
+        TLorentzVector tau0_neut_pion_reco;          // pulls from pi0_p4
+        TLorentzVector tau1_neut_pion_reco;
+
+        TLorentzVector tau0_char_pion_reco;          // pulls from charged_tracks
+        TLorentzVector tau1_char_pion_reco;
+
+        // Need to first subtract neutral pion from total p4 to get charged contribution for correct filling
+        // This formula only works for truth because reco needs to fill from 'tau0_charged_tracks_p4'
+
+        tau0_neut_pion_reco.SetPtEtaPhiE(tau0_pi0_p4->Pt(), tau0_pi0_p4->Eta(), tau0_pi0_p4->Phi(), tau0_pi0_p4->E());
+        tau1_neut_pion_reco.SetPtEtaPhiE(tau1_pi0_p4->Pt(), tau1_pi0_p4->Eta(), tau1_pi0_p4->Phi(), tau1_pi0_p4->E());
+
+        tau0_char_pion_reco.SetPtEtaPhiE(tau0_charged_tracks_p4->Pt(), tau0_charged_tracks_p4->Eta(), tau0_charged_tracks_p4->Phi(), tau0_charged_tracks_p4->E());
+        tau1_char_pion_reco.SetPtEtaPhiE(tau1_charged_tracks_p4->Pt(), tau1_charged_tracks_p4->Eta(), tau1_charged_tracks_p4->Phi(), tau1_charged_tracks_p4->E());
+
+        const TLorentzVector COM_reco = tau0_char_pion_reco + tau1_char_pion_reco + tau0_neut_pion_reco + tau1_neut_pion_reco;
+
+        const double upsilon0_reco = tau0_char_pion_reco.E()/(tau0_char_pion_reco+tau0_neut_pion_reco).E();
+        const double upsilon1_reco = tau1_char_pion_reco.E()/(tau1_char_pion_reco+tau1_neut_pion_reco).E();
+
+        // std::cout<<"upsilon0: " << upsilon0 << std::endl;
+        // std::cout<<"upsilon1: " <<upsilon1 << std::endl;
+
+        // compute_psi_hh_basic
+
+        TLorentzVector beam_reco;
+	    beam_reco.SetPxPyPzE(0., 0., 6.5e6, 6.5e6);
+	    
+	    const TVector3 boostVector_reco = COM_reco.BoostVector();
+
+        tau0_char_pion_reco.Boost((-1.)*boostVector_reco);
+        tau1_char_pion_reco.Boost((-1.)*boostVector_reco);
+        beam_reco.Boost((-1.)*boostVector_reco); 
+
+        // rotate system and obtain psi
+        
+        double phi_tau0_char_pion_reco = tau0_char_pion_reco.Phi();
+        //std::cout << "phi_vz (tau0_char_pion phi): " << phi_vz << "\n" << std::endl;
+        double theta_tau0_char_pion_reco = tau0_char_pion_reco.Theta();
+
+        tau0_char_pion_reco.RotateZ((-1.0) * phi_tau0_char_pion_reco);
+        tau0_char_pion_reco.RotateY((-1.0) * theta_tau0_char_pion_reco);
+
+        tau1_char_pion_reco.RotateZ((-1.0) * phi_tau0_char_pion_reco);
+        tau1_char_pion_reco.RotateY((-1.0) * theta_tau0_char_pion_reco);
+
+        beam_reco.RotateZ((-1.0) * phi_tau0_char_pion_reco);
+        beam_reco.RotateY((-1.0) * theta_tau0_char_pion_reco);
+        beam_reco.RotateZ((-1.0) * tau1_char_pion_reco.Phi());
+
+        tau0_char_pion_reco.RotateZ((-1.0) * tau1_char_pion_reco.Phi());
+        tau1_char_pion_reco.RotateZ((-1.0) * tau1_char_pion_reco.Phi());
+
+        double psi_reco = beam_reco.Phi();
+
+        // perform phase shift if necessary
+        if ((upsilon0_reco < 0.5 && upsilon1_reco > 0.5) || (upsilon0_reco > 0.5 && upsilon1_reco < 0.5))
+        {
+            // std::cout << "Upsilon condition met" <<"\n"<<std::endl;
+            psi_reco += (M_PI / 2);
+
+        }
+
+        // std::cout << "check" << std::endl;
+        // correct phase to be witin -pi to pi
+        while (psi_reco > M_PI) 
+        {
+            psi_reco -= 2 * M_PI;
+        }
+        while (psi_reco < -M_PI) 
+        {
+            psi_reco += 2 * M_PI;
+        }
+        
+        // std::cout << "Psi: " << psi << "\n" << std::endl;
+
+        psi_reco_vec.push_back(psi_reco);
+        h1->Fill(psi_reco);
+
+        //std::cout<<"psi_truth: " << psi_truth.size() <<std::endl;
+
+
         }
 
     }
 
-    // std::cout<<"psi_truth: " << psi_truth.size() <<std::endl;
+    // Printing all psi values
 
+    /*
     for ( float counter = 0 ; counter < psi_truth.size() ; counter++ ) {
-        // std::cout << psi_truth[counter] << std::endl;
-
+        std::cout << psi_truth[counter] << std::endl;
     }
+    */
 
-    //h1->Draw();
-    fout.cd();
+    // Drawing Histograms
+
+    //  Truth Psi
+
+    fout1.cd();
     
-    std::cout << "writing..." << std::endl;
+    std::cout << "writing truth psi..." << std::endl;
     h1->GetXaxis()->SetTitle("Truth Psi");
     h1->GetYaxis()->SetTitle("Entries");
     //h1->SetMarkerStyle();
 
     h1->Write();
-    std::cout << "closing..." << std::endl;
-    fout.Close();
+    std::cout << "closing truth psi..." << std::endl;
+    fout1.Close();
+    std::cout << "Done." << std::endl;
+
+    // Reco Psi
+
+    fout2.cd();
+    
+    std::cout << "writing reco psi..." << std::endl;
+    h2->GetXaxis()->SetTitle("Reco Psi");
+    h2->GetYaxis()->SetTitle("Entries");
+    //h1->SetMarkerStyle();
+
+    h2->Write();
+    std::cout << "closing reco psi..." << std::endl;
+    fout2.Close();
     std::cout << "Done." << std::endl;
 
     return 0;
