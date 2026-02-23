@@ -1,12 +1,16 @@
-// This script will select a specific number of random events from an ntuple
+/*
+This script will calculate truth and reco psi from an input TTree (created by xTauFramework).
+It will output root histograms and csv files for both calculations.
+The csv can be read into run_plotting.py to produce a 2D colormap of both variables.
+*/
 
-#include<cstdio>
-#include<cstdlib>
-#include<iostream>
-#include<vector>
-#include<iterator>
-#include<algorithm> 
-#include<fstream>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+#include <vector>
+#include <iterator>
+#include <algorithm> 
+#include <fstream>
 #include <chrono>
 #include <ctime>
 
@@ -28,19 +32,12 @@ float hadhadTruthPsi(
                 TLorentzVector* tau1_neut    // tau1_matched_vis_neutral_p4
                 ){
 
-    // implement TRUTH psi calculation
-
-    // std::cout << "Calculating truth level psi..." << std::endl;
-
     TLorentzVector had_tau0_vis;
     TLorentzVector had_tau1_vis;
     TLorentzVector tau0_char_pion;
     TLorentzVector tau1_char_pion;
     TLorentzVector tau0_neut_pion;
     TLorentzVector tau1_neut_pion;
-
-    // Need to first subtract neutral pion from total p4 to get charged contribution for correct filling
-    // This formula only works for truth because reco needs to fill from 'tau0_charged_tracks_p4'
 
     had_tau0_vis.SetPtEtaPhiE(tau0_track->Pt(), tau0_track->Eta(), tau0_track->Phi(), tau0_track->E());
     had_tau1_vis.SetPtEtaPhiE(tau1_track->Pt(), tau1_track->Eta(), tau1_track->Phi(), tau1_track->E());
@@ -55,8 +52,6 @@ float hadhadTruthPsi(
     const double upsilon0 = tau0_char_pion.E()/(tau0_char_pion+tau0_neut_pion).E();
     const double upsilon1 = tau1_char_pion.E()/(tau1_char_pion+tau1_neut_pion).E();
 
-    // compute_psi_hh_basic
-
     TLorentzVector beam;
     beam.SetPxPyPzE(0., 0., 6.5e6, 6.5e6);
     
@@ -69,7 +64,6 @@ float hadhadTruthPsi(
     // rotate system and obtain psi
     
     double phi_tau0_char_pion = tau0_char_pion.Phi();
-    //std::cout << "phi_vz (tau0_char_pion phi): " << phi_vz << "\n" << std::endl;
     double theta_tau0_char_pion = tau0_char_pion.Theta();
 
     tau0_char_pion.RotateZ((-1.0) * phi_tau0_char_pion);
@@ -92,6 +86,7 @@ float hadhadTruthPsi(
     {
         psi += (M_PI / 2);
     }
+    
     // correct phase to be witin -pi to pi
     while (psi > M_PI) 
     {
@@ -101,8 +96,6 @@ float hadhadTruthPsi(
     {
         psi += 2 * M_PI;
     }
-    
-    // std::cout << "Truth Level Psi: " << psi << "\n" << std::endl;
 
     return psi;
 
@@ -131,9 +124,6 @@ float hadhadRecoPsi(
     const double upsilon0_reco = tau0_char_pion_reco.E()/(tau0_char_pion_reco+tau0_neut_pion_reco).E();
     const double upsilon1_reco = tau1_char_pion_reco.E()/(tau1_char_pion_reco+tau1_neut_pion_reco).E();
 
-    // compute_psi_hh_basic
-
-    
     TLorentzVector beam_reco;
     beam_reco.SetPxPyPzE(0., 0., 6.5e6, 6.5e6);
     
@@ -168,7 +158,6 @@ float hadhadRecoPsi(
     if ((upsilon0_reco < 0.5 && upsilon1_reco > 0.5) || (upsilon0_reco > 0.5 && upsilon1_reco < 0.5))
     {
         psi_reco += (M_PI / 2);
-
     }
 
     // correct phase to be witin -pi to pi
@@ -181,8 +170,6 @@ float hadhadRecoPsi(
     {
         psi_reco += 2 * M_PI;
     }
-    
-    // std::cout << "Reco Level Psi: " << psi_reco << "\n" << std::endl;
 
     return psi_reco;
 }
@@ -196,14 +183,14 @@ int main() {
 
     // Select sample (select number of events above for loop)
 
-    // polarized
+        // polarized
     TFile f("/eos/user/s/svenetia/taucp_ntuples_with_hadhad/mc/hadhad/mc20e/nom/user.svenetia.Ztt_pythia02.mc20_13TeV.802365.Py8_DYtt_60M250_hadhad.PHYS.r13145_p6266.w_0_Zt/user.svenetia.46611689._000001.ZttHadHad.root"); // read input file
 	TFile fout1("./out-files/root/psiTruthPol.root", "recreate"); 
     TFile fout2("./out-files/root/psiRecoPol.root", "recreate");
     string truthFilestem = "./out-files/csv/psiTruthPol.csv";
     string recoFilestem = "./out-files/csv/psiRecoPol.csv";    
 
-    // unpolarized
+        // unpolarized
     /*
     TFile f("/eos/user/s/svenetia/taucp_ntuples_with_hadhad/mc/hadhad/mc20e/nom/user.svenetia.Ztt_test02.mc20_13TeV.602984.PhPy8_Ztt_UnPol_had30had20.PHYS.r13145_p6490.w_0_Zt/user.svenetia.46373438._000001.ZttHadHad.root");
     TFile fout1("psiTruthUnPol.root", "recreate"); 
@@ -214,10 +201,10 @@ int main() {
 
     // ********************************************************************************************************************* //
 
-    // Initialized variables
+    // "Get" the NOMINAL tree from the file and assign it to local variable "input_tree"
+    TTree *input_tree = (TTree*)f.Get("NOMINAL");        
 
-    TTree *input_tree = (TTree*)f.Get("NOMINAL");        // "Get" the NOMINAL tree from the file and assign it to local variable "input_tree"
-
+    // Initialize variables
     Int_t n_taus;                                       
     Int_t tau0_matched_n_charged_pion;
     Int_t tau0_matched_n_neutral_pion;
@@ -230,20 +217,23 @@ int main() {
     UInt_t tau0_pantau_decay_mode;
     UInt_t tau1_pantau_decay_mode;
     
-    // Initialize TLorentzVector for each p4 needed for psi truth calc
-    TLorentzVector* tau0_matched_vis_p4 = new TLorentzVector();             // truth variables
+    // Initialize TLorentzVector for each variable
+
+        // truth
+    TLorentzVector* tau0_matched_vis_p4 = new TLorentzVector();             
     TLorentzVector* tau0_matched_vis_neutral_p4 = new TLorentzVector();
     TLorentzVector* tau1_matched_vis_p4 = new TLorentzVector();
     TLorentzVector* tau1_matched_vis_neutral_p4 = new TLorentzVector();
 
-    std::vector<TLorentzVector>* tau0_charged_tracks_p4 = new std::vector<TLorentzVector>();          // reco variables
+        // reco
+    std::vector<TLorentzVector>* tau0_charged_tracks_p4 = new std::vector<TLorentzVector>();          
     std::vector<TLorentzVector>* tau0_pi0s_p4 = new std::vector<TLorentzVector>();
     std::vector<TLorentzVector>* tau1_charged_tracks_p4 = new std::vector<TLorentzVector>();
     std::vector<TLorentzVector>* tau1_pi0s_p4 = new std::vector<TLorentzVector>();
 
     // Point to location in tree
 
-    // Selections
+    // object level cuts
     input_tree->SetBranchAddress("tau0_matched_n_charged_pion", &tau0_matched_n_charged_pion); 
     input_tree->SetBranchAddress("tau0_matched_n_neutral_pion", &tau0_matched_n_neutral_pion);
     input_tree->SetBranchAddress("tau0_matched_isHadTau", &tau0_matched_isHadTau);
@@ -268,10 +258,9 @@ int main() {
     input_tree->SetBranchAddress("tau1_charged_tracks_p4", &tau1_charged_tracks_p4);
     input_tree->SetBranchAddress("tau1_pi0s_p4", &tau1_pi0s_p4);
 
-    TRandom3 rand;  // Random number for choosing a selection of events                              
-
-    std::vector<float> psi_truth_vec; // for csv export
-    std::vector<float> psi_reco_vec;  // for csv export
+    // Define storage vectors for csv export
+    std::vector<float> psi_truth_vec; 
+    std::vector<float> psi_reco_vec;  
 
     // Initialize histograms
     TH1* h1 = nullptr; 
@@ -279,28 +268,27 @@ int main() {
     h1 = new TH1D("h1", "Psi Truth", 30, -3.14, 3.14);
     h2 = new TH1D("h2", "Psi Reco", 30, -3.14, 3.14);
 
+    // select number of events (all events or selection)
+    
+    int nEntries = input_tree->GetEntries(); // all events
+    // int nEntries = 50;                    // selection of events (if want random, make required change in "main" block)
+    // TRandom3 rand;                         // Random number for choosing a selection of events
+
+    std::cout << "Num entries: " << nEntries << std::endl;
     std::cout << "Starting loop..." << std::endl;
 
-    // select number of events
-    int nEntries = input_tree->GetEntries(); // all events
-   std::cout << "Num entries: " << nEntries << std::endl;
+    for ( int randCounter = 0 ; randCounter < nEntries ; randCounter++ ) { 
 
-    // int nEntries = 50;                    // selection of events - if want random, make required change in "main" block
-
-    for ( int randCounter = 0 ; randCounter < nEntries ; randCounter++ ) { // iterate from 0 to the max number of events you want to select
-
-        input_tree->GetEvent(randCounter);                            // get the information for the specific event
-   	    // std::cout << "Selected entry: " << randCounter << std::endl;
+        input_tree->GetEvent(randCounter);                        
 
         // if selecting random events, uncomment below
         /*
-        int i = rand.Uniform(input_tree->GetEntries());     // chooses a random number from the entries in the input tree
+        int i = rand.Uniform(input_tree->GetEntries());     
         input_tree->GetEvent(i);   
         */
 
-        // truth selections
+        // apply truth selections
         if ((tau0_matched_n_charged_pion==1) && (tau0_matched_n_neutral_pion==1) && (tau0_matched_isHadTau==1) && (tau1_matched_n_charged_pion==1) && (tau1_matched_n_neutral_pion==1) && (tau1_matched_isHadTau==1)){
-	    // std::cout << "Passed selection!" << std::endl;
 
         // Calculate truth and reco psi
         float psi_truth_result = hadhadTruthPsi(
@@ -327,7 +315,7 @@ int main() {
 
     }
 
-    // Helpful print statements for debugging
+    // Helpful print statements for debugging - size of truth and reco should match!
 
     /*
     for ( float counter = 0 ; counter < psi_reco_vec.size() ; counter++ ) {
@@ -337,7 +325,7 @@ int main() {
     std::cout << "Length of reco psi: " << psi_reco_vec.size() << std::endl;
 	*/
 
-    std::cout << "Saving data to csv..." << std::endl;
+    // Save data to csv
 
     std::ofstream reco_output_file(truthFilestem);
     std::ostream_iterator<float> reco_output_iterator(reco_output_file, "\n");
@@ -347,39 +335,27 @@ int main() {
     std::ostream_iterator<float> truth_output_iterator(truth_output_file, "\n");
     std::copy(std::begin(psi_truth_vec), std::end(psi_truth_vec), truth_output_iterator);
 
-    // Drawing Histograms
+    // Draw Histograms
 
-    std::cout << "Plotting truth psi..." << std::endl;
-
+    std::cout << "Drawing histograms" << std::endl;
+    
+        // Truth Psi
     fout1.cd();
-
-    // std::cout << "writing..." << std::endl;
     h1->GetXaxis()->SetTitle("Truth Psi");
     h1->GetYaxis()->SetTitle("Entries");
     h1->Write();
-    // std::cout << "closing..." << std::endl;
     fout1.Close();
-    std::cout << "Done." << std::endl;
 
-    // Reco Psi
-
-    std::cout << "Plotting reco psi..." << std::endl;
-    
+        // Reco Psi
     fout2.cd();
-    
-    // std::cout << "writing reco psi..." << std::endl;
     h2->GetXaxis()->SetTitle("Reco Psi");
     h2->GetYaxis()->SetTitle("Entries");
     h2->Write();
-    // std::cout << "closing reco psi..." << std::endl;
     fout2.Close();
-    std::cout << "Done." << std::endl;
 
+    // Print duration of code execution
     auto end = std::chrono::system_clock::now();
-
     std::chrono::duration<double> elapsed_seconds = end-start;
-    //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-
     std::cout << "elapsed time: " << elapsed_seconds.count() << "s"
               << std::endl;
 
